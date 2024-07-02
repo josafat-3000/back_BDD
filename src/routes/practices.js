@@ -1,58 +1,71 @@
 const express = require("express");
 const router = express.Router();
-const { practicas } = require("../models");
+const { practicas } = require("../../models");
+const { validateToken, validateProfessorOrAdmin } = require("../middleware/auth");
 
-const { validateToken } = require("../middleware/auth");
-
-router.get("/", validateToken, async (req, res) => {
-  const practices = await practicas.findAll();
-  res.json({ list_prac: practices});
+// Añadir nueva práctica
+router.post("/", validateToken, validateProfessorOrAdmin, async (req, res, next) => {
+  try {
+    const { tema_id, nombre_P, descripcion_P, calificacion, usuario_practica, profesor_practica } = req.body;
+    const nuevaPractica = await practicas.create({
+      tema_id,
+      nombre_P,
+      descripcion_P,
+      calificacion,
+      usuario_practica,
+      profesor_practica
+    });
+    res.status(201).json(nuevaPractica);
+  } catch (error) {
+    next(error);
+  }
 });
 
-// router.get("/byId/:id", async (req, res) => {
-//   const id = req.params.id;
-//   const post = await Posts.findByPk(id);
-//   res.json(post);
-// });
+// Editar detalles de una práctica
+router.put("/:id", validateToken, validateProfessorOrAdmin, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { tema_id, nombre_P, descripcion_P, calificacion, usuario_practica, profesor_practica } = req.body;
+    const practica = await practicas.findByPk(id);
+    if (!practica) {
+      return res.status(404).json({ error: "Práctica no encontrada" });
+    }
+    practica.tema_id = tema_id;
+    practica.nombre_P = nombre_P;
+    practica.descripcion_P = descripcion_P;
+    practica.calificacion = calificacion;
+    practica.usuario_practica = usuario_practica;
+    practica.profesor_practica = profesor_practica;
+    await practica.save();
+    res.status(200).json(practica);
+  } catch (error) {
+    next(error);
+  }
+});
 
-// router.get("/byuserId/:id", async (req, res) => {
-//   const id = req.params.id;
-//   const listOfPosts = await Posts.findAll({
-//     where: { UserId: id },
-//     include: [Likes],
-//   });
-//   res.json(listOfPosts);
-// });
+// Eliminar una práctica
+router.delete("/:id", validateToken, validateProfessorOrAdmin, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const practica = await practicas.findByPk(id);
+    if (!practica) {
+      return res.status(404).json({ error: "Práctica no encontrada" });
+    }
+    await practica.destroy();
+    res.status(204).end();
+  } catch (error) {
+    next(error);
+  }
+});
 
-// router.post("/", validateToken, async (req, res) => {
-//   const post = req.body;
-//   post.username = req.user.username;
-//   post.UserId = req.user.id;
-//   await Posts.create(post);
-//   res.json(post);
-// });
-
-// router.put("/title", validateToken, async (req, res) => {
-//   const { newTitle, id } = req.body;
-//   await Posts.update({ title: newTitle }, { where: { id: id } });
-//   res.json(newTitle);
-// });
-
-// router.put("/postText", validateToken, async (req, res) => {
-//   const { newText, id } = req.body;
-//   await Posts.update({ postText: newText }, { where: { id: id } });
-//   res.json(newText);
-// });
-
-// router.delete("/:postId", validateToken, async (req, res) => {
-//   const postId = req.params.postId;
-//   await Posts.destroy({
-//     where: {
-//       id: postId,
-//     },
-//   });
-
-//   res.json("DELETED SUCCESSFULLY");
-// });
+// Listar todas las prácticas
+router.get("/", validateToken, async (req, res, next) => {
+  try {
+    const practicasList = await practicas.findAll();
+    res.status(200).json({ list_prac: practicasList });
+  } catch (error) {
+    next(error);
+  }
+});
 
 module.exports = router;
