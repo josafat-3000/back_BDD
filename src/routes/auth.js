@@ -45,8 +45,9 @@ router.post("/login", async (req, res, next) => {
       { username: user.correo_U, id: user.id_U },
       "importantsecret"
     );
-    res.json({ token: accessToken, correo: user.correo_U, id: user.id_U });
+    res.json({ token: accessToken, correo: user.correo_U, id: user.id_U, rol: user.rol });
   } catch (error) {
+    console.log(error)
     next(error);
   }
 });
@@ -108,9 +109,41 @@ router.put("/updateinfo/:id", validateToken, async (req, res, next) => {
   }
 });
 
-// Ruta para cerrar sesión (opcional, eliminar token en el frontend)
-router.post("/logout", validateToken, (req, res) => {
-  res.json("LOGOUT_SUCCESS");
+// Ruta para obtener todos los usuarios con rol de alumno (rol == 3)
+router.get("/students", validateToken, async (req, res, next) => {
+  try {
+    const students = await usuario.findAll({ where: { rol: 3 } });
+    res.json(students);
+  } catch (error) {
+    next(error);
+  }
 });
 
+router.get("/user/:id", async (req, res, next) => {
+  try {
+    const user = await usuario.findByPk(req.params.id, {
+      attributes: { exclude: ["contrasena_U"] }, // Excluimos la contraseña por seguridad
+    });
+    if (!user) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+    res.json(user);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Ruta para actualizar información del usuario por ID
+router.patch("/user/:id", async (req, res, next) => {
+  try {
+    const user = await usuario.findByPk(req.params.id);
+    if (!user) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+    await user.update(req.body);
+    res.json(user);
+  } catch (error) {
+    next(error);
+  }
+});
 module.exports = router;

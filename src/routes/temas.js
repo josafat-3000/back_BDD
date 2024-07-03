@@ -6,10 +6,9 @@ const { validateToken, validateProfessorOrAdmin } = require("../middleware/auth"
 // Añadir nuevo tema
 router.post("/", validateToken, validateProfessorOrAdmin, async (req, res, next) => {
   try {
-    const { nombre_T, descripcion_T } = req.body;
+    const { nombre_T} = req.body;
     const nuevoTema = await temas.create({
-      nombre_T,
-      descripcion_T
+      nombre_T
     });
     res.status(201).json(nuevoTema);
   } catch (error) {
@@ -21,13 +20,12 @@ router.post("/", validateToken, validateProfessorOrAdmin, async (req, res, next)
 router.put("/:id", validateToken, validateProfessorOrAdmin, async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { nombre_T, descripcion_T } = req.body;
+    const { nombre_T } = req.body;
     const tema = await temas.findByPk(id);
     if (!tema) {
       return res.status(404).json({ error: "Tema no encontrado" });
     }
     tema.nombre_T = nombre_T;
-    tema.descripcion_T = descripcion_T;
     await tema.save();
     res.status(200).json(tema);
   } catch (error) {

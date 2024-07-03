@@ -43,6 +43,19 @@ router.put("/:id", validateToken, validateProfessorOrAdmin, async (req, res, nex
   }
 });
 
+router.patch("/:id", async (req, res, next) => {
+  try {
+    const practica = await practicas.findByPk(req.params.id);
+    if (!practica) {
+      return res.status(404).json({ error: "Práctica no encontrada" });
+    }
+    await practica.update({ calificacion_P: req.body.calificacion });
+    res.json(practica);
+  } catch (error) {
+    next(error);
+  }
+});
+
 // Eliminar una práctica
 router.delete("/:id", validateToken, validateProfessorOrAdmin, async (req, res, next) => {
   try {
@@ -62,7 +75,32 @@ router.delete("/:id", validateToken, validateProfessorOrAdmin, async (req, res, 
 router.get("/", validateToken, async (req, res, next) => {
   try {
     const practicasList = await practicas.findAll();
+    res.status(200).json(practicasList);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Listar todas las prácticas
+router.get("/:id", validateToken, async (req, res, next) => {
+  const { id } = req.params;
+  try {
+    const practicasList = await practicas.findAll({where: {
+      usuario_practica: id,
+    },});
     res.status(200).json({ list_prac: practicasList });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/by/:id", validateToken, async (req, res, next) => {
+  const { id } = req.params;
+  try {
+    const practicasList = await practicas.findAll({where: {
+      id_P: id,
+    },});
+    res.status(200).json(practicasList);
   } catch (error) {
     next(error);
   }

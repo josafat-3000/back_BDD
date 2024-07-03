@@ -2,13 +2,15 @@ const { verify } = require("jsonwebtoken");
 const { usuario } = require("../../models");
 
 const validateToken = (req, res, next) => {
-  const accessToken = req.header("Authorization");
+  
+  const accessToken = req.header("accessToken");
 
   if (!accessToken) return res.status(401).json({ error: "User not authenticated!" });
 
   try {
     const validToken = verify(accessToken, "importantsecret");
     req.user = validToken;
+    console.log(req.user)
 
     if (validToken) {
       return next();
@@ -20,7 +22,7 @@ const validateToken = (req, res, next) => {
 
 const validateAdmin = async (req, res, next) => {
   try {
-    const user = await usuario.findByPk(req.user.id_U);
+    const user = await usuario.findByPk(req.user.id);
     if (user && user.rol === 1) { // Asumiendo que el rol 1 es para administradores
       return next();
     }
@@ -32,7 +34,7 @@ const validateAdmin = async (req, res, next) => {
 
 const validateProfessorOrAdmin = async (req, res, next) => {
   try {
-    const user = await usuario.findByPk(req.user.id_U);
+    const user = await usuario.findByPk(req.user.id);
     if (user && (user.rol === 1 || user.rol === 2)) { // Asumiendo que el rol 1 es para administradores y el rol 2 es para profesores
       return next();
     }
